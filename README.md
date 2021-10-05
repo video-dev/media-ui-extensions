@@ -8,6 +8,9 @@ Use `template.md` to frame your proposal and make a pull-request to add your pro
 
 Inspired by [rust-lang/rfcs](https://github.com/rust-lang/rfcs) via [video-dev/hlsjs-rfcs](https://github.com/video-dev/hlsjs-rfcs).
 
+## Submitting a request
+Use the github issues to request and disucss a desired feature/function at a high level.
+
 ## Resources
 * [MDN video element docs](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/video)
 * [WHATWG spec](https://html.spec.whatwg.org/multipage/media.html#the-video-element)
