@@ -11,6 +11,7 @@ One paragraph explanation of the feature.
 [motivation]: #motivation
 
 Why are we doing this? What use cases does it support? What is the expected outcome?
+Consider listing any specific Goals and Non-Goals as sub-sections.
 
 # Guide-level Explanation
 [guide-level-explanation]: #guide-level-explanation
