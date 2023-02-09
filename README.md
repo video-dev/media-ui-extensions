@@ -4,7 +4,7 @@ Extending the HTMLVideoElement API (`<video>`) to support advanced video player 
 With the addition of [Web Components](https://developer.mozilla.org/en-US/docs/Web/Web_Components) to the browser, video player developers can create custom elements that mimic the video tag API, with goals of creating stand-in compatibility with the video tag and compatibility across players. The video tag API is however lacking some important functions to support modern player UIs, including playback quality/resolution selection and awareness of ads. This repo is intended to capture requests and proposals for those functions.
 
 ## Goals for Proposals
-we want these proposals to be something that we can eventually propose to the Media WG or WhatWG as additional features to the video element and anything related. In the meantime can be used as a spec to keep things interoperable between implementers.
+We want these proposals to be something that we can eventually propose to the Media WG or WhatWG as additional features to the video element and anything related. In the meantime, proposals accepted to media-ui-extensions can be used as a specification to keep things interoperable between implementers.
 
 ## Before submitting a proposal
 If you have a new idea, it might be worth creating an issue to discuss it a bit first before submitting a proposal to make sure that it's something could be a good fit and won't be less likely to be rejected later on.
