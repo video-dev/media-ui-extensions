@@ -1,6 +1,6 @@
 - Feature Name: Live Edge
 - Start Date: 2023-02-08
-- PR: [video-dev/media-ui-extensions/#7](https://github.com/video-dev/media-ui-extensions/pull/7)
+- PR: [video-dev/media-ui-extensions#7](https://github.com/video-dev/media-ui-extensions/pull/7)
 
 # Summary
 
