@@ -89,14 +89,6 @@ seekToLiveEl.addEventListener('click', () => {
 });
 ```
 
-[guide-level-explanation]: #guide-level-explanation
-
-Explain the proposal as if it was already included in the API and you were teaching it to another developer. That generally means:
-
-* Introducing new named concepts.
-* Explaining the feature largely in terms of examples.
-* If applicable, provide sample error messages.
-
 # Reference-level explanation
 
 ## Property: Constraint on `HTMLMediaElement::seekable.end()` for Seekable Live Edge
