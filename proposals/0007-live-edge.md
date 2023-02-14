@@ -64,6 +64,7 @@ This means two things:
 - __Advertised Live Edge__ - This is the latest available media time as represented in a manifest, playlist, or simiilar. This will not be exposed by any API defined in this proposal, but is defined here for reference in the recommended computations for Seekable Live Edge.
 - __Seekable Live Edge__ - This is the latest available media time a player should attempt to seek to or play, typically some offset from the Advertised Live Edge, determined in part by things like the `HOLD-BACK` or the `suggestedPresentationDelay`.
 - __Live Edge Window__ - This is the range of time between the Seekable Live Edge and some offset that should be treated as the live edge for visualization purposes, given the segmented nature of HAS media delivery and updates.
+- __Live Seekable Window__ - This is the range of time between the Seekable Live Edge and the start of seekable live Media as derived from the media's manifest or playlist(s). For "standard" live, this will be a small window size and is primarily present to account for things like latency (and not used for UI). For "DVR" use cases, this is used to allow users to seek within live content. While out of scope for this proposal, adding a definition here for clarity.
 
 
 ## Diagram with HLS reference values for context
@@ -78,14 +79,15 @@ Segments derived from the media playlist last fetched by a client player and the
 |           |           |           |           |           |           |           |           |           |           |
 |___________|___________|___________|___________|___________|___________|___________|___________|___________|___________|
 |                                   | <--------- Live Edge Window ----------> | <- Seekable Live Edge                   | <- Advertised Live Edge
-^ seekable.start() *                ^ seekable.end() - liveEdgeOffset         ^ seekable.end()
+^ seekable.start() *                ^ liveEdgeStart                           ^ seekable.end()                          ^ N/A **
 ```
 
-* NOTE: There is a difference between the `seekable.start()` and the computed value of the start of the Live Edge Window (modeled in this proposal as `seekable.end() - liveEdgeOffset`). For all common HAS specifications, live content will have a range of available segments advertised by their respective manifests/playlists. This ensures that playback environments can have latency/rebuffering and drift behind the Live Edge. This means that, even for "standard" live media content, we would not want the `seekable.start()` to be conflated with the start of the Live Edge Window. Additionally, this ensures support of "DVR" live content, either "standard" live DVR or "sliding window" DVR. In these cases, the content is intended to be seekable/retrievable not just programmatically, but also by viewer/users. It also means the range between `seekable.start()` and the start of the Live Edge Window may continue to grow.
+- \* NOTE: There is a difference between the `seekable.start()` and the computed value of the start of the Live Edge Window (modeled in this proposal as `liveEdgeStart`). For all common HAS specifications, live content will have a range of available segments advertised by their respective manifests/playlists. This ensures that playback environments can have latency/rebuffering and drift behind the Live Edge. This means that, even for "standard" live media content, we would not want the `seekable.start()` to be conflated with the start of the Live Edge Window. Additionally, this ensures support of "DVR" live content, either "standard" live DVR or "sliding window" DVR. In these cases, the content is intended to be seekable/retrievable not just programmatically, but also by viewer/users. It also means the range between `seekable.start()` and the start of the Live Edge Window may continue to grow.
+- \*\* NOTE: We currently have no proposed official API to expose the "Advertised Live Edge."
 
 ## Usage
 
-The API will both constrain `seekable.end()` to mean Seekable Live Edge and add a new `liveEdgeOffset` property so UI implementors can rely on these to indicate live playback and/or seek to live functionality.
+The API will both constrain `seekable.end()` to mean Seekable Live Edge and add a new `liveEdgeStart` property so UI implementors can rely on these to indicate live playback and/or seek to live functionality.
 
 ## Example:
 
@@ -95,8 +97,7 @@ const mediaEl = document.querySelector('#extended-media');
 // Indicating that playback is in the Live Edge Window
 const liveIndicatorEl = document.querySelector('#live-indicator');
 mediaEl.addEventListener('timeupdate', () => {
-  const liveWindowStart = mediaEl.seekable.end(mediaEl.seekable.length -1) - mediaEl.liveEdgeOffset;
-  const playingLive = mediaEl.currentTime >= liveWindowStart;
+  const playingLive = mediaEl.currentTime >= mediaEl.liveEdgeStart;
   liveIndicatorEl.innerHtml = playingLive ? 'LIVE' : 'NOT LIVE';
 });
 
@@ -180,9 +181,9 @@ __Context__:
 
   \- From: *Annex K, §K.3.2 Table K.1 - Service Latency* (See Also: *Table K.6 — Semantics of Latency element* from the same section)
 
-## Property: `liveEdgeOffset` (to model Live Edge Window start)
+## Property: `liveEdgeStart` (to model Live Edge Window start)
 
-An offset or delta from the Seekable Live Edge (`seekable.end(seekable.length -1)`, appropriately constrained as defined by this specification). An extended media element is playing within the Live Edge Window if and only if: `currentTime >= (seekable.end(seekable.length - 1) - liveEdgeOffset`).
+A media presentation time that represents the beginning of the Live Edge Window. An extended media element is playing within the Live Edge Window if and only if: `currentTime >= liveEdgeStart`).
 
 ### Possible values
 
@@ -194,24 +195,24 @@ An offset or delta from the Seekable Live Edge (`seekable.end(seekable.length -1
 
 1. __"Standard Latency" Live__
 
-`liveEdgeOffset = 3 * #EXT-X-TARGETDURATION`
+`liveEdgeStart = (seekable.end(seekable.length - 1) - 3 * #EXT-X-TARGETDURATION)`
 
 Note that this is a cautious computation. In many stream + playback scenarios, `2 * EXT-X-TARGETDURATION` will likely be sufficient. However, with this less cautious value, there may be edge cases where standard playback will "hop in and out of the live edge," so recommending the more cautious value here.
 
 2. __Low Latency Live__
 
-`liveEdgeOffset = 2 * #EXT-X-PART-INF:PART-TARGET`
+`liveEdgeStart = (seekable.end(seekable.length - 1) 2 * #EXT-X-PART-INF:PART-TARGET)`
 
-Unlike "standard" segments (`#EXTINF`s), parts' durations _**must**_ be <= `#EXT-X-PART-INF:PART-TARGET` (without rounding). Also unlike "standard," HLS servers _**must**_ add new partial segments to playlists within 1 (instead of 1.5) Part Target  Duration after it added the previous Partial Segment. This means that, even under sub-optimal conditions, low latency HLS _**should**_ end up with a much smaller `liveEdgeOffset`.
+Unlike "standard" segments (`#EXTINF`s), parts' durations _**must**_ be <= `#EXT-X-PART-INF:PART-TARGET` (without rounding). Also unlike "standard," HLS servers _**must**_ add new partial segments to playlists within 1 (instead of 1.5) Part Target  Duration after it added the previous Partial Segment. This means that, even under sub-optimal conditions, low latency HLS _**should**_ end up with a much smaller `liveEdgeStart`.
 
 ### Recommended computation for ISO/IEC 23009-1 (aka "MPEG-DASH")
 
 TBD
 
-## Event: `liveedgeoffsetchange`
+## Event: `liveedgestartchange`
 
-An event that fires whenever the `liveEdgeOffset` value changes. Note that this should only ever fire once per `src` load, and is expected to fire as soon after loading sufficient metadata to compute the value.
+An event that fires whenever the `liveEdgeStart` value changes. Note that this should only ever fire once per `src` load, and is expected to fire as soon after loading sufficient metadata to compute the value.
 
 # Rationale and alternatives
 
-This proposed solution provides a simple API with simple values for exposing information that is useful for live UI development but is only available by the code/entity responsible for parsing the media data. We could go with a more complex API (e.g. having a `TimeRange` to represent the live window, adding a new interface instead of constraining `seekable.end()`, etc.), but it's unclear that this would offer any advantage over the proposed simplified solution. UI implements could also "guess" at a reasonable value for the `liveEdgeOffset`, but this would likely lead to both false positives and false negatives for determining whether or not playback is in the Live Edge Window.
+This proposed solution provides a simple API with simple values for exposing information that is useful for live UI development but is only available by the code/entity responsible for parsing the media data. We could go with a more complex API (e.g. having a `TimeRange` to represent the live window, adding a new interface instead of constraining `seekable.end()`, etc.), but it's unclear that this would offer any advantage over the proposed simplified solution. We also considered using a `liveEdgeOffset` instead of `liveEdgeStart`, but that added unnecessary complexity for API users without any obvious benefit (aside from allowing the value to be computed independent of the constrained `seekable.end()` by implementors of this proposal). UI implementors could also "guess" at a reasonable value for the `liveEdgeStart`, but this would likely lead to both false positives and false negatives for determining whether or not playback is in the Live Edge Window.
