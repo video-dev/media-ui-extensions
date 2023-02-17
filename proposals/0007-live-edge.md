@@ -209,10 +209,6 @@ Unlike "standard" segments (`#EXTINF`s), parts' durations _**must**_ be <= `#EXT
 
 TBD
 
-## Event: `liveedgestartchange`
-
-An event that fires whenever the `liveEdgeStart` value changes. Note that this should only ever fire once per `src` load, and is expected to fire as soon after loading sufficient metadata to compute the value.
-
 # Rationale and alternatives
 
 This proposed solution provides a simple API with simple values for exposing information that is useful for live UI development but is only available by the code/entity responsible for parsing the media data. We could go with a more complex API (e.g. having a `TimeRange` to represent the live window, adding a new interface instead of constraining `seekable.end()`, etc.), but it's unclear that this would offer any advantage over the proposed simplified solution. We also considered using a `liveEdgeOffset` instead of `liveEdgeStart`, but that added unnecessary complexity for API users without any obvious benefit (aside from allowing the value to be computed independent of the constrained `seekable.end()` by implementors of this proposal). UI implementors could also "guess" at a reasonable value for the `liveEdgeStart`, but this would likely lead to both false positives and false negatives for determining whether or not playback is in the Live Edge Window.
