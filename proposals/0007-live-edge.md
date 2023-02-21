@@ -63,8 +63,8 @@ This means two things:
 
 - __Advertised Live Edge__ - This is the latest available media time as represented in a manifest, playlist, or simiilar. This will not be exposed by any API defined in this proposal, but is defined here for reference in the recommended computations for Seekable Live Edge.
 - __Seekable Live Edge__ - This is the latest available media time a player should attempt to seek to or play, typically some offset from the Advertised Live Edge, determined in part by things like the `HOLD-BACK` or the `suggestedPresentationDelay`.
-- __Live Edge Window__ - This is the range of time between the Seekable Live Edge and some offset that should be treated as the live edge for visualization purposes, given the segmented nature of HAS media delivery and updates.
-- __Live Seekable Window__ - This is the range of time between the Seekable Live Edge and the start of seekable live Media as derived from the media's manifest or playlist(s). For "standard" live, this will be a small window size and is primarily present to account for things like latency (and not used for UI). For "DVR" use cases, this is used to allow users to seek within live content. While out of scope for this proposal, adding a definition here for clarity.
+- __Live Edge Window__ - This is the range of time between the Seekable Live Edge and some offset that should be treated as the live edge for visualization purposes, given the segmented nature of HAS media delivery and updates. Its start is exposed by the proposed `liveEdgeStart`, and its end is identical to the proposed constrained `seekable.end()`/Live Seekable Window end.
+- __Live Seekable Window__ - This is the range of time between the Seekable Live Edge and the start of seekable live Media as derived from the media's manifest or playlist(s). For "standard" live, this will be a small window size and is primarily present to account for things like latency (and not used for UI). For "DVR" use cases, this is used to allow users to seek within live content. While out of scope for this proposal, adding a definition here for clarity. Its start and end are defined by the proposed constrained `seekable` `TimeRanges` object.
 
 
 ## Diagram with HLS reference values for context
@@ -112,6 +112,36 @@ mediaEl.currentTime = mediaEl.seekable.start(0);
 ```
 
 # Reference-level explanation
+
+## Property: `liveEdgeStart` (to model Live Edge Window start)
+
+A media presentation time that represents the beginning of the Live Edge Window. An extended media element is playing within the Live Edge Window if and only if: `currentTime >= liveEdgeStart`). 
+
+__NOTE__: All references to `seekable.end()` for `liveEdgeStart` computation assume the constrained `seekable.end()` as defined below.
+
+### Possible values
+
+- `undefined` - Unimplemented, in which case UI implementors may rely on a "best guess" solution for modeling the Live Edge Window.
+- `NaN` - "unknown" or "inapplicable" (e.g. for `streamType = "on-demand"`)
+- `0 <= x <= Number.MAX_SAFE_INTEGER` - known stable value for current stream
+
+### Recommended computation for RFC8216bis12 (aka HLS)
+
+1. __"Standard Latency" Live__
+
+`liveEdgeStart = (seekable.end(seekable.length - 1) - 3 * #EXT-X-TARGETDURATION)`
+
+Note that this is a cautious computation. In many stream + playback scenarios, `2 * EXT-X-TARGETDURATION` will likely be sufficient. However, with this less cautious value, there may be edge cases where standard playback will "hop in and out of the live edge," so recommending the more cautious value here.
+
+2. __Low Latency Live__
+
+`liveEdgeStart = (seekable.end(seekable.length - 1) 2 * #EXT-X-PART-INF:PART-TARGET)`
+
+Unlike "standard" segments (`#EXTINF`s), parts' durations _**must**_ be <= `#EXT-X-PART-INF:PART-TARGET` (without rounding). Also unlike "standard," HLS servers _**must**_ add new partial segments to playlists within 1 (instead of 1.5) Part Target  Duration after it added the previous Partial Segment. This means that, even under sub-optimal conditions, low latency HLS _**should**_ end up with a much smaller `liveEdgeStart`.
+
+### Recommended computation for ISO/IEC 23009-1 (aka "MPEG-DASH")
+
+TBD
 
 ## Property: Constraint on `HTMLMediaElement::seekable.end()` (to model Seekable Live Edge)
 
@@ -180,34 +210,6 @@ __Context__:
 > This attribute may express latency that is only achievable by low-latency players under favourable network conditions.
 
   \- From: *Annex K, §K.3.2 Table K.1 - Service Latency* (See Also: *Table K.6 — Semantics of Latency element* from the same section)
-
-## Property: `liveEdgeStart` (to model Live Edge Window start)
-
-A media presentation time that represents the beginning of the Live Edge Window. An extended media element is playing within the Live Edge Window if and only if: `currentTime >= liveEdgeStart`).
-
-### Possible values
-
-- `undefined` - Unimplemented, in which case UI implementors may rely on a "best guess" solution for modeling the Live Edge Window.
-- `NaN` - "unknown" or "inapplicable" (e.g. for `streamType = "on-demand"`)
-- `0 <= x <= Number.MAX_SAFE_INTEGER` - known stable value for current stream
-
-### Recommended computation for RFC8216bis12 (aka HLS)
-
-1. __"Standard Latency" Live__
-
-`liveEdgeStart = (seekable.end(seekable.length - 1) - 3 * #EXT-X-TARGETDURATION)`
-
-Note that this is a cautious computation. In many stream + playback scenarios, `2 * EXT-X-TARGETDURATION` will likely be sufficient. However, with this less cautious value, there may be edge cases where standard playback will "hop in and out of the live edge," so recommending the more cautious value here.
-
-2. __Low Latency Live__
-
-`liveEdgeStart = (seekable.end(seekable.length - 1) 2 * #EXT-X-PART-INF:PART-TARGET)`
-
-Unlike "standard" segments (`#EXTINF`s), parts' durations _**must**_ be <= `#EXT-X-PART-INF:PART-TARGET` (without rounding). Also unlike "standard," HLS servers _**must**_ add new partial segments to playlists within 1 (instead of 1.5) Part Target  Duration after it added the previous Partial Segment. This means that, even under sub-optimal conditions, low latency HLS _**should**_ end up with a much smaller `liveEdgeStart`.
-
-### Recommended computation for ISO/IEC 23009-1 (aka "MPEG-DASH")
-
-TBD
 
 # Rationale and alternatives
 
