@@ -130,6 +130,16 @@ streamType = Number.isFinite(mediaEl.duration)
   : "unknown"
 ```
 
+__Context__:
+
+`media.duration`: 
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Returns the length of the media resource, in seconds, assuming that the start of the media resource is at time zero. <br/>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Returns NaN if the duration isn't available. <br/>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Returns Infinity for unbounded streams.
+
+\- From: https://html.spec.whatwg.org/multipage/media.html#dom-media-duration-dev
+
+
 ## Event: `"streamtypechange"`
 
 This event should be dispatched from an extended `HTMLMediaElement` instance whenever the stream type has been determined for a loaded media source.
@@ -142,11 +152,11 @@ This proposed solution provides a simple API with simple values for exposing inf
 
 ## Why not simply rely on `duration`?
 
-While there are elements of various specifications that suggest live content *should*, under most circumstances, have a `duration=Infinity` (See, e.g. https://www.w3.org/TR/media-source-2/#dom-mediasource-setliveseekablerange, https://www.w3.org/TR/media-source-2/#dfn-duration-change), there are a few reasons to avoid this.
+While there are elements of various specifications that suggest live content *should*, under most circumstances, have a `duration=Infinity` (See, e.g. https://html.spec.whatwg.org/multipage/media.html#dom-media-duration-dev, https://www.w3.org/TR/media-source-2/#dom-mediasource-setliveseekablerange, https://www.w3.org/TR/media-source-2/#dfn-duration-change), there are a few reasons to avoid this.
 
-1. As far as I'm aware, no specifications state that `duration` *__MUST__* be `Infinity` for live streams.
-2. At least some "playback engines" *__MAY__* set a finite duration for live streams, at least by default.
-3. As with the case of `#EXT-X-ENDLIST` in RFC8216 (aka "HLS"), the `duration` of live streams that have ended will typically be set to a finite value, leading to the same problems as discussed above at end of stream.
+1. Although https://html.spec.whatwg.org/multipage/media.html#dom-media-duration-dev strongly suggests that `duration` *__SHOULD__* be `Infinity` for live streams, there is at least some ambiguity between "live" vs. "unbounded" (referencing the language from the specification), so conflating the two may be inappropriate.
+2. At least some "playback engines" *__MAY__* set a finite duration for live streams, at least by default. While I do not know of any cases, this may also be true for some native playback environments.
+3. As with the case of `#EXT-X-ENDLIST` in RFC8216 (aka "HLS"), the `duration` of live streams that have ended will typically be set to a finite value, leading to the same problems as discussed above at end of stream. This is arguably the most compelling reason to avoid conflating the two.
 4. By avoiding unnecessary constraints on `duration`, we leave room for alternative media ui extension proposals that may want to augment this value for other, duration-specific reasons.
 5. By using a custom `streamType` property with well-defined enumerated values, we increase legibility for develoeprs and leave room for extending the set of stream types in subsequent proposals, if merited.
 5. By using a custom `streamType` property, it is possible to polyfill the `HTMLMediaElement` without *requiring* the use of e.g. Web Components (though this is still recommended & encouraged).
