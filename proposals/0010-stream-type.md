@@ -144,7 +144,7 @@ __Context__:
 
 This event should be dispatched from an extended `HTMLMediaElement` instance whenever the stream type has been determined for a loaded media source.
 
-__NOTE__: For media unload cases, implementors *__SHOULD__* ensure the `streamType` to `"unknown"` after an unload begins but prior to any `"emptied"` external event handlers being invoked. This ensures that consumers of the API may reliably use the `"emptied"` event to monitor potential changes in `"streamType"`.
+__NOTE__: For media unload cases, implementors *__SHOULD__* ensure the `streamType` is (re)set to `"unknown"` after an unload begins but prior to any `"emptied"` external event handlers being invoked. This ensures that consumers of the API may reliably use the `"emptied"` event to monitor potential changes in `"streamType"`.
 
 # Rationale and alternatives
 
