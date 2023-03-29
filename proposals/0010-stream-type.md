@@ -16,9 +16,9 @@ An additional goal of this proposal is to recommend for MSE-based players or “
 
 ## Definitions
 
-- __Live Media Stream__ - Media content that is being made available in real-time at the time of playback, and the end of the media (if there is an end), will only be available sometime in the future.
-  - __NOTE__ - This definition also applies to "DVR" or "sliding window" content, where the content is being published/provided in real-time but earlier content is still also available.
-- __On Demand Media Stream__ - Media content that is entirely available, from beginning to end, at the time of playback. Also sometimes called "Video on Demand" or "VOD."
+- **On Demand Media Stream** - Media content that is entirely available for playback at the same time. Also sometimes called "Video on Demand" or "VOD."
+- **Live Media Stream** - Media content that is made available for playback over time.
+  - **NOTE** - This definition also applies to "DVR" or "sliding window" content, where the content is being published/provided in real-time but earlier content is also still available.
 
 ## Usage
 
@@ -42,8 +42,8 @@ const seekBarEl = playerUIEl.querySelector('#seek-bar');
 
 const updateUI = () => {
   // If the stream type is "unknown" (because no source has
-  // been loaded, the previous source has been unloaded, or 
-  // the stream type is not yet derived from the source), only 
+  // been loaded, the previous source has been unloaded, or
+  // the stream type is not yet derived from the source), only
   // show a "big play button". This also accounts for cases
   // where `preload="none"`.
   if (mediaEl.streamType === 'unknown') {
@@ -83,13 +83,13 @@ mediaEl.addEventListener('emptied', updateUI);
 
 ## Property: `streamType`
 
-A string value that represents the type of media stream that *__MUST__* be one of the values listed below.
+A string value that represents the type of media stream that _**MUST**_ be one of the values listed below.
 
-__NOTE__: Any computation of the `streamType` value that requires fetching of playlists, manifests, or the like, *__SHOULD__* respect the load and `preload` state specified on the extended `HTMLMediaElement` instance. For example, if `preload="none"`, implementors should wait until e.g. a `"loadstart"` event is dispatched from the instance.
+**NOTE**: Any computation of the `streamType` value that requires fetching of playlists, manifests, or the like, _**SHOULD**_ respect the load and `preload` state specified on the extended `HTMLMediaElement` instance. For example, if `preload="none"`, implementors should wait until e.g. a `"loadstart"` event is dispatched from the instance.
 
 ### Possible values
 
-- `undefined` - Unimplemented, in which case UI implementors may rely on a "best guess" solution for modeling the stream type (See *§Recommended inferred value from native `HTMLMediaElement`*, below).
+- `undefined` - Unimplemented, in which case UI implementors may rely on a "best guess" solution for modeling the stream type (See _§Recommended inferred value from native `HTMLMediaElement`_, below).
 - `"on-demand"` - The current loaded media source is an On Demand Stream.
 - `"live"` - The current loaded media source is a Live Stream (including potentially "DVR" or "sliding window" live streams).
 - `"unknown"` - No media source is set, the source is not yet loaded (e.g. because `preload="none"`), or the stream type has yet to be determined.
@@ -98,11 +98,11 @@ __NOTE__: Any computation of the `streamType` value that requires fetching of pl
 
 `streamType = (#EXT-X-PLAYLIST-TYPE === "VOD") ? "on-demand" : "live"`
 
-__Context__:
+**Context**:
 
-> A Media Playlist has further constraints on its updates if it contains an EXT-X-PLAYLIST-TYPE tag.  An EXT-X-PLAYLIST-TYPE tag with a value of VOD indicates that the Playlist file MUST NOT change.  An EXT-X-PLAYLIST-TYPE tag with a value of EVENT indicates that the Server MUST NOT change or remove any part of the Playlist file, with the exception of EXT-X-PART tags and Media Metadata tags as described above; the Server MAY append lines to the Playlist.
+> A Media Playlist has further constraints on its updates if it contains an EXT-X-PLAYLIST-TYPE tag. An EXT-X-PLAYLIST-TYPE tag with a value of VOD indicates that the Playlist file MUST NOT change. An EXT-X-PLAYLIST-TYPE tag with a value of EVENT indicates that the Server MUST NOT change or remove any part of the Playlist file, with the exception of EXT-X-PART tags and Media Metadata tags as described above; the Server MAY append lines to the Playlist.
 
-  \- From: https://datatracker.ietf.org/doc/html/draft-pantos-hls-rfc8216bis-12#section-6.2.1
+\- From: https://datatracker.ietf.org/doc/html/draft-pantos-hls-rfc8216bis-12#section-6.2.1
 
 #### NOTE: Why not `#EXT-X-ENDLIST` detection?
 
@@ -112,51 +112,50 @@ The `#EXT-X-ENDLIST` tag only indicates that a particular playlist will no longe
 
 `streamType = (MPD@type === "dynamic") ? "live" : "on-demand`
 
-__Context__:
+**Context**:
 
-MPD@type: 
+MPD@type:
+
 > default: `static`
 > specifies the type of the Media Presentation. For static Media Presentations (`@type="static"`), all Segments are available between the `@availabilityStartTime` and the `@availabilityEndTime`. For dynamic Media Presentations (`@type="dynamic"`), Segments typically have different availability times.
 
-\- From: *§5.3.1.2 Table 3 - Semantics of MPD element*
+\- From: _§5.3.1.2 Table 3 - Semantics of MPD element_
 
 ### Recommended inferred value from native `HTMLMediaElement`
 
 ```js
 streamType = Number.isFinite(mediaEl.duration)
-  ? "on-demand"
+  ? 'on-demand'
   : mediaEl.duration === Number.POSITIVE_INFINITY
-  ? "live"
-  : "unknown"
+  ? 'live'
+  : 'unknown';
 ```
 
-__Context__:
+**Context**:
 
-`media.duration`: 
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Returns the length of the media resource, in seconds, assuming that the start of the media resource is at time zero. <br/>
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Returns NaN if the duration isn't available. <br/>
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Returns Infinity for unbounded streams.
+`media.duration`:
+
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Returns the length of the media resource, in seconds, assuming that the start of the media resource is at time zero. <br/> > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Returns NaN if the duration isn't available. <br/> > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Returns Infinity for unbounded streams.
 
 \- From: https://html.spec.whatwg.org/multipage/media.html#dom-media-duration-dev
-
 
 ## Event: `"streamtypechange"`
 
 This event should be dispatched from an extended `HTMLMediaElement` instance whenever the stream type has been determined for a loaded media source.
 
-__NOTE__: For media unload cases, implementors *__SHOULD__* ensure the `streamType` is (re)set to `"unknown"` after an unload begins but prior to any `"emptied"` external event handlers being invoked. This ensures that consumers of the API may reliably use the `"emptied"` event to monitor potential changes in `"streamType"`.
+**NOTE**: For media unload cases, implementors _**SHOULD**_ ensure the `streamType` is (re)set to `"unknown"` after an unload begins but prior to any `"emptied"` external event handlers being invoked. This ensures that consumers of the API may reliably use the `"emptied"` event to monitor potential changes in `"streamType"`.
 
 # Rationale and alternatives
 
-This proposed solution provides a simple API with simple values for exposing information that is useful for UI development that distinguishes between live and on demand content, but is only guaranteed to be available by the code/entity responsible for parsing the media data. Based on the scope of currently proposed stream types, an alternative implementation could potentially rely on `duration` values (corresponding to the values used in *§Recommended inferred value from native `HTMLMediaElement`*, above). Below is a discussion on why this is not recommended.
+This proposed solution provides a simple API with simple values for exposing information that is useful for UI development that distinguishes between live and on demand content, but is only guaranteed to be available by the code/entity responsible for parsing the media data. Based on the scope of currently proposed stream types, an alternative implementation could potentially rely on `duration` values (corresponding to the values used in _§Recommended inferred value from native `HTMLMediaElement`_, above). Below is a discussion on why this is not recommended.
 
 ## Why not simply rely on `duration`?
 
-While there are elements of various specifications that suggest live content *should*, under most circumstances, have a `duration=Infinity` (See, e.g. https://html.spec.whatwg.org/multipage/media.html#dom-media-duration-dev, https://www.w3.org/TR/media-source-2/#dom-mediasource-setliveseekablerange, https://www.w3.org/TR/media-source-2/#dfn-duration-change), there are a few reasons to avoid this.
+While there are elements of various specifications that suggest live content _should_, under most circumstances, have a `duration=Infinity` (See, e.g. https://html.spec.whatwg.org/multipage/media.html#dom-media-duration-dev, https://www.w3.org/TR/media-source-2/#dom-mediasource-setliveseekablerange, https://www.w3.org/TR/media-source-2/#dfn-duration-change), there are a few reasons to avoid this.
 
-1. Although https://html.spec.whatwg.org/multipage/media.html#dom-media-duration-dev strongly suggests that `duration` *__SHOULD__* be `Infinity` for live streams, there is at least some ambiguity between "live" vs. "unbounded" (referencing the language from the specification), so conflating the two may be inappropriate.
-2. At least some "playback engines" *__MAY__* set a finite duration for live streams, at least by default. While I do not know of any cases, this may also be true for some native playback environments.
+1. Although https://html.spec.whatwg.org/multipage/media.html#dom-media-duration-dev strongly suggests that `duration` _**SHOULD**_ be `Infinity` for live streams, there is at least some ambiguity between "live" vs. "unbounded" (referencing the language from the specification), so conflating the two may be inappropriate.
+2. At least some "playback engines" _**MAY**_ set a finite duration for live streams, at least by default. While I do not know of any cases, this may also be true for some native playback environments.
 3. As with the case of `#EXT-X-ENDLIST` in RFC8216 (aka "HLS"), the `duration` of live streams that have ended will typically be set to a finite value, leading to the same problems as discussed above at end of stream. This is arguably the most compelling reason to avoid conflating the two.
 4. By avoiding unnecessary constraints on `duration`, we leave room for alternative media ui extension proposals that may want to augment this value for other, duration-specific reasons.
 5. By using a custom `streamType` property with well-defined enumerated values, we increase legibility for develoeprs and leave room for extending the set of stream types in subsequent proposals, if merited.
-5. By using a custom `streamType` property, it is possible to polyfill the `HTMLMediaElement` without *requiring* the use of e.g. Web Components (though this is still recommended & encouraged).
+6. By using a custom `streamType` property, it is possible to polyfill the `HTMLMediaElement` without _requiring_ the use of e.g. Web Components (though this is still recommended & encouraged).
