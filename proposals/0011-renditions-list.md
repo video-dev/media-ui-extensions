@@ -1,6 +1,6 @@
 - Feature Name: renditions_list
 - Start Date: 2023-04-06
-- PR: (leave this empty)
+- PR: [video-dev/media-ui-extensions#11](https://github.com/video-dev/media-ui-extensions/pull/11)
 
 # Summary
 [summary]: #summary
