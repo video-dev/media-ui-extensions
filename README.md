@@ -3,6 +3,72 @@ Extending the HTMLVideoElement API (`<video>`) to support advanced video player 
 
 With the addition of [Web Components](https://developer.mozilla.org/en-US/docs/Web/Web_Components) to the browser, video player developers can create custom elements that mimic the video tag API, with goals of creating stand-in compatibility with the video tag and compatibility across players. The video tag API is however lacking some important functions to support modern player UIs, including playback quality/resolution selection and awareness of ads. This repo is intended to capture requests and proposals for those functions.
 
+## Media Extensions Interface
+
+The following IDL summarizes the additions to `HTMLMediaElement` defined by the proposals accepted so far. See each linked proposal for full definitions, possible values, and recommended computations.
+
+```ts
+partial interface HTMLMediaElement {
+  // Stream Type (proposals/0010-stream-type.md)
+  // "unknown" | "live" | "on-demand"
+  readonly attribute DOMString streamType;
+  // dispatches "streamtypechange" when the stream type is determined
+
+  // Live Edge (proposals/0007-live-edge.md)
+  // Media presentation time at which the Live Edge Window begins.
+  // The element is at the live edge when `currentTime >= liveEdgeStart`.
+  // NaN when unknown/inapplicable (e.g. on-demand streams).
+  readonly attribute double liveEdgeStart;
+  // `seekable.end(seekable.length - 1)` is constrained to model the Seekable Live Edge.
+
+  // Renditions List (proposals/0011-renditions-list.md)
+  readonly attribute VideoRenditionList videoRenditions;
+  readonly attribute AudioRenditionList audioRenditions;
+};
+
+// Renditions List (proposals/0011-renditions-list.md)
+interface VideoRenditionList : EventTarget {
+  readonly attribute unsigned long length;
+  getter VideoRendition (unsigned long index);
+  VideoRendition? getRenditionById(DOMString id);
+  attribute long selectedIndex;
+
+  attribute EventHandler onchange;
+  attribute EventHandler onaddrendition;
+  attribute EventHandler onremoverendition;
+};
+
+interface VideoRendition {
+  readonly attribute DOMString src;
+  readonly attribute DOMString id;
+  readonly attribute unsigned long width;
+  readonly attribute unsigned long height;
+  readonly attribute unsigned long bitrate;
+  readonly attribute double frameRate;
+  readonly attribute DOMString codec;
+  attribute boolean selected;
+};
+
+interface AudioRenditionList : EventTarget {
+  readonly attribute unsigned long length;
+  getter AudioRendition (unsigned long index);
+  AudioRendition? getRenditionById(DOMString id);
+  attribute long selectedIndex;
+
+  attribute EventHandler onchange;
+  attribute EventHandler onaddrendition;
+  attribute EventHandler onremoverendition;
+};
+
+interface AudioRendition {
+  readonly attribute DOMString src;
+  readonly attribute DOMString id;
+  readonly attribute unsigned long bitrate;
+  readonly attribute DOMString codec;
+  attribute boolean selected;
+};
+```
+
 ## Goals for Proposals
 We want these proposals to be something that we can eventually propose to the Media WG or WhatWG as additional features to the video element and anything related. In the meantime, proposals accepted to media-ui-extensions can be used as a specification to keep things interoperable between implementers.
 
